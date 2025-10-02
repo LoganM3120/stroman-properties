@@ -32,6 +32,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  --scroll-buttons-safe-space: 0px;
 }
 
 main {
@@ -461,7 +462,7 @@ nav.main-nav {
 }
 
 body.has-scroll-buttons {
-  padding-bottom: 4.5rem;
+  padding-bottom: calc(var(--scroll-buttons-safe-space, 0px) + env(safe-area-inset-bottom));
 }
 
 @media (max-width: 600px) {
