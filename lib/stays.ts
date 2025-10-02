@@ -138,3 +138,5 @@ export function formatStayRange(details: StayDetails): string {
 
   return `${startLabel} – ${endLabel}, ${yearLabel}`;
 }
+
+export const PROPERTY_TIMEZONE = DEFAULT_TIME_ZONE;

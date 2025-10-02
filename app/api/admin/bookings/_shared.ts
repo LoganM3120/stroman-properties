@@ -1,3 +1,4 @@
+import { requireOwner } from '@/lib/admin/auth';
 import { logger } from '@/lib/logging';
 import type { CalendarBlockRecord } from '@/lib/calendarBlocks';
 import { deleteCalendarBlocks, updateCalendarBlocks } from '@/lib/calendarBlocks';
@@ -48,33 +49,14 @@ export interface AdminContext {
   actor: string;
 }
 
-function getAdminSecret(): string {
-  const secret = process.env.ADMIN_API_SECRET;
-  if (!secret) {
-    throw new Error('ADMIN_API_SECRET is not configured');
-  }
-  return secret;
-}
-
-function extractBearer(value: string | null): string | null {
-  if (!value) return null;
-  const match = value.match(/^Bearer\s+(.+)$/i);
-  if (!match) return null;
-  return match[1].trim();
-}
-
 export function requireAdmin(request: Request): AdminContext {
-  const secret = getAdminSecret();
-  const provided =
-    extractBearer(request.headers.get('authorization')) ??
-    request.headers.get('x-admin-secret')?.trim();
-
-  if (!provided || provided !== secret) {
+  try {
+    const context = requireOwner(request);
+    const actor = request.headers.get('x-admin-actor')?.trim() || context.actor || 'admin';
+    return { actor };
+  } catch {
     throw new HttpError('Unauthorized', 401);
   }
-
-  const actor = request.headers.get('x-admin-actor')?.trim() || 'admin';
-  return { actor };
 }
 
 export async function parseJsonBody<T>(request: Request): Promise<T> {
