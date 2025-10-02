@@ -16,22 +16,46 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
     subject: '',
     body: '',
   });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
   const [view, setView] = useState<'options' | 'email'>('options');
 
   useEffect(() => {
-    if (open) setView('options');
+    if (open) {
+      setView('options');
+      setStatus('idle');
+      setErrorMessage('');
+    }
   }, [open]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const mailto = `mailto:g.stroman3@gmail.com?subject=${encodeURIComponent(
-      form.subject
-    )}&body=${encodeURIComponent(
-      form.body +
-        `\n\nFrom: ${form.firstName} ${form.lastName}\nEmail: ${form.email}`
-    )}`;
-    window.location.href = mailto;
-    onClose();
+    setStatus('loading');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as
+          | { message?: string }
+          | null;
+        setErrorMessage(data?.message ?? 'Something went wrong. Please try again.');
+        setStatus('error');
+        return;
+      }
+
+      setStatus('success');
+      setForm({ email: '', firstName: '', lastName: '', subject: '', body: '' });
+    } catch (error) {
+      console.error('Failed to send contact request', error);
+      setErrorMessage('Something went wrong. Please try again.');
+      setStatus('error');
+    }
   };
 
   if (!open) return null;
@@ -51,7 +75,14 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
         />
         {view === 'options' ? (
           <>
-            <button className="btn" onClick={() => setView('email')}>
+            <button
+              className="btn"
+              onClick={() => {
+                setStatus('idle');
+                setErrorMessage('');
+                setView('email');
+              }}
+            >
               Email
             </button>
             <p className="or-text">--OR--</p>
@@ -105,7 +136,17 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
               value={form.body}
               onChange={(e) => setForm({ ...form, body: e.target.value })}
             />
-            <button type="submit">Send Email</button>
+            <button type="submit" disabled={status === 'loading'}>
+              {status === 'loading' ? 'Sending…' : 'Send Email'}
+            </button>
+            {status === 'success' && (
+              <p className="success-text">Thanks! Your message has been sent.</p>
+            )}
+            {status === 'error' && (
+              <p className="error-text" role="alert">
+                {errorMessage}
+              </p>
+            )}
           </form>
         )}
       </div>
