@@ -108,7 +108,7 @@ async function upsertGuest(details: {
   phone: string;
 }): Promise<GuestRecord> {
   const records = await supabaseJson<GuestRecord[]>(
-    '/guests',
+    '/guests?on_conflict=email',
     {
       method: 'POST',
       headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
