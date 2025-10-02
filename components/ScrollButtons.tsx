@@ -28,6 +28,15 @@ export default function ScrollButtons({
     }
     setEnabled(true);
 
+    const updateSafeSpace = (offset: number) => {
+      const BASE_SAFE_SPACE = 72; // matches ~4.5rem button height allowance
+      const safeSpace = Math.max(BASE_SAFE_SPACE - offset, 0);
+      document.body.style.setProperty(
+        '--scroll-buttons-safe-space',
+        `${safeSpace.toFixed(2)}px`,
+      );
+    };
+
     const onScroll = () => {
       const rect = hero.getBoundingClientRect();
       setVisible(rect.bottom <= 0);
@@ -37,6 +46,7 @@ export default function ScrollButtons({
         const overlap = Math.max(0, window.innerHeight - footerRect.top);
         const desiredOffset = overlap > 0 ? overlap + 16 : 0;
 
+        updateSafeSpace(desiredOffset);
         setFooterOffset((current) =>
           Math.abs(current - desiredOffset) > 0.5 ? desiredOffset : current,
         );
@@ -50,6 +60,7 @@ export default function ScrollButtons({
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      document.body.style.removeProperty('--scroll-buttons-safe-space');
     };
   }, []);
 
@@ -58,6 +69,9 @@ export default function ScrollButtons({
       return;
     }
     document.body.classList.add('has-scroll-buttons');
+    if (!document.body.style.getPropertyValue('--scroll-buttons-safe-space')) {
+      document.body.style.setProperty('--scroll-buttons-safe-space', '72px');
+    }
     return () => document.body.classList.remove('has-scroll-buttons');
   }, [enabled]);
 
