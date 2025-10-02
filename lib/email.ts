@@ -1,32 +1,60 @@
-import 'server-only';
-import type { ReactElement } from 'react';
+import nodemailer from 'nodemailer';
 
-export interface EmailContent {
+const {
+  SMTP_HOST,
+  SMTP_PORT,
+  SMTP_SECURE,
+  SMTP_USER,
+  SMTP_PASS,
+  SMTP_FROM_EMAIL,
+  CONTACT_RECIPIENT_EMAIL,
+} = process.env;
+
+if (!SMTP_HOST) throw new Error('Missing SMTP_HOST environment variable');
+if (!SMTP_PORT) throw new Error('Missing SMTP_PORT environment variable');
+if (!SMTP_USER) throw new Error('Missing SMTP_USER environment variable');
+if (!SMTP_PASS) throw new Error('Missing SMTP_PASS environment variable');
+if (!CONTACT_RECIPIENT_EMAIL)
+  throw new Error('Missing CONTACT_RECIPIENT_EMAIL environment variable');
+
+const port = Number.parseInt(SMTP_PORT, 10);
+
+if (Number.isNaN(port)) {
+  throw new Error('SMTP_PORT must be a valid number');
+}
+
+const transporter = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port,
+  secure: SMTP_SECURE === 'true',
+  auth: {
+    user: SMTP_USER,
+    pass: SMTP_PASS,
+  },
+});
+
+export interface ContactFormPayload {
+  email: string;
+  firstName: string;
+  lastName: string;
   subject: string;
-  html: string;
-  text: string;
+  body: string;
 }
 
-let cachedRenderer: typeof import('react-dom/server').renderToStaticMarkup | null = null;
+export async function sendContactEmail(payload: ContactFormPayload) {
+  const { email, firstName, lastName, subject, body } = payload;
 
-async function getRenderer(): Promise<
-  typeof import('react-dom/server').renderToStaticMarkup
-> {
-  if (cachedRenderer) {
-    return cachedRenderer;
-  }
-
-  const reactDomServer = await import('react-dom/server');
-  if (typeof reactDomServer.renderToStaticMarkup !== 'function') {
-    throw new Error('react-dom/server does not expose renderToStaticMarkup');
-  }
-
-  cachedRenderer = reactDomServer.renderToStaticMarkup;
-  return cachedRenderer;
+  await transporter.sendMail({
+    to: CONTACT_RECIPIENT_EMAIL,
+    from: SMTP_FROM_EMAIL ?? SMTP_USER,
+    subject,
+    replyTo: email,
+    text: [
+      body,
+      '',
+      `From: ${firstName} ${lastName}`,
+      `Email: ${email}`,
+    ].join('\n'),
+  });
 }
 
-export async function renderEmail(element: ReactElement): Promise<string> {
-  const renderToStaticMarkup = await getRenderer();
-  const markup = renderToStaticMarkup(element);
-  return `<!DOCTYPE html>${markup}`;
-}
