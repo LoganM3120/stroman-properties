@@ -116,7 +116,7 @@ async function fetchBookings(status: AdminBookingStatus): Promise<BookingRecord[
     ].join(','),
   );
   params.set('order', 'created_at.desc');
-  const path = `/bookings?${params.toString()}`;
+  const path = `/admin_bookings_dashboard?${params.toString()}`;
   const records = await supabaseJson<BookingRecord[]>(path);
   return records ?? [];
 }
