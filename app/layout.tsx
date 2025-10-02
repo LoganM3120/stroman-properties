@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import Footer from '@/components/layout/Footer';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );
