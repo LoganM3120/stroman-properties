@@ -88,6 +88,17 @@ main {
   text-align: center;
 }
 
+.admin-login__logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-login__card h1 {
+  color: var(--color-primary);
+  margin-bottom: 0.75rem;
+}
+
 .admin-login__subtitle {
   color: var(--color-text-secondary);
   margin-bottom: 2rem;
@@ -135,6 +146,22 @@ main {
   margin: 0;
   color: #dc2626;
   font-weight: 600;
+}
+
+.admin-login__back {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 2rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.admin-login__back:hover,
+.admin-login__back:focus-visible {
+  text-decoration: underline;
 }
 
 .admin-bookings {
