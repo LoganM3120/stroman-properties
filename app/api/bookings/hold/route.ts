@@ -37,6 +37,14 @@ interface HoldCreationResponse {
   payment_method: string;
 }
 
+interface HoldLookupRecord {
+  id: string;
+  invoice_number: string | null;
+  total_amount: number | null;
+  hold_expires_at: string | null;
+  payment_method: string | null;
+}
+
 function requireString(value: unknown, field: keyof HoldRequestBody): string {
   if (typeof value !== 'string' || !value.trim()) {
     throw new Error(`Missing or invalid field: ${field}`);
@@ -193,16 +201,40 @@ export async function POST(request: Request) {
       ? {}
       : ((await response.json().catch(() => ({}))) as Partial<HoldCreationResponse>);
 
-    if (!result.booking_id) {
+    let payloadSource: Partial<HoldCreationResponse> = result;
+
+    if (!payloadSource.booking_id) {
+      try {
+        const lookupPath =
+          `/bookings?select=id,invoice_number,total_amount,hold_expires_at,payment_method` +
+          `&invoice_number=eq.${encodeURIComponent(invoiceNumber)}&limit=1`;
+        const [record] =
+          (await supabaseJson<HoldLookupRecord[]>(lookupPath)) ?? [];
+        if (record) {
+          payloadSource = {
+            booking_id: record.id,
+            invoice_number: record.invoice_number ?? invoiceNumber,
+            total_amount: record.total_amount ?? totals.total_amount,
+            hold_expires_at: record.hold_expires_at ?? holdExpiresAt,
+            payment_method: record.payment_method ?? paymentMethod,
+          };
+        }
+      } catch (lookupError) {
+        logger.error('Failed to fetch booking hold after RPC', lookupError);
+        throw lookupError;
+      }
+    }
+
+    if (!payloadSource.booking_id) {
       throw new Error('Hold creation response missing booking_id');
     }
 
     const payload: HoldCreationResponse = {
-      booking_id: result.booking_id,
-      invoice_number: result.invoice_number ?? invoiceNumber,
-      total_amount: result.total_amount ?? totals.total_amount,
-      hold_expires_at: result.hold_expires_at ?? holdExpiresAt,
-      payment_method: result.payment_method ?? paymentMethod,
+      booking_id: payloadSource.booking_id,
+      invoice_number: payloadSource.invoice_number ?? invoiceNumber,
+      total_amount: payloadSource.total_amount ?? totals.total_amount,
+      hold_expires_at: payloadSource.hold_expires_at ?? holdExpiresAt,
+      payment_method: payloadSource.payment_method ?? paymentMethod,
     };
 
     const stayDetails = createStayDetails(checkIn.toISOString(), checkOut.toISOString());
