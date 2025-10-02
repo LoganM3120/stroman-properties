@@ -15,22 +15,42 @@ export default function ScrollButtons({
 }: ScrollButtonsProps): ReactElement | null {
   const [visible, setVisible] = useState(false);
   const [enabled, setEnabled] = useState(false);
+  const [footerOffset, setFooterOffset] = useState(0);
 
   useEffect(() => {
-    const hero = document.querySelector('.landing-hero, .gallery-hero');
+    const hero = document.querySelector(
+      '.landing-hero, .gallery-hero',
+    ) as HTMLElement | null;
+    const footer = document.querySelector('.site-footer') as HTMLElement | null;
+
     if (!hero) {
       return;
     }
     setEnabled(true);
 
     const onScroll = () => {
-      const rect = (hero as HTMLElement).getBoundingClientRect();
+      const rect = hero.getBoundingClientRect();
       setVisible(rect.bottom <= 0);
+
+      if (footer) {
+        const footerRect = footer.getBoundingClientRect();
+        const overlap = Math.max(0, window.innerHeight - footerRect.top);
+        const desiredOffset = overlap > 0 ? overlap + 16 : 0;
+
+        setFooterOffset((current) =>
+          Math.abs(current - desiredOffset) > 0.5 ? desiredOffset : current,
+        );
+      }
     };
 
     window.addEventListener('scroll', onScroll);
+    window.addEventListener('resize', onScroll);
     onScroll();
-    return () => window.removeEventListener('scroll', onScroll);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -46,7 +66,10 @@ export default function ScrollButtons({
   }
 
   return (
-    <div className={`scroll-buttons${visible ? ' visible' : ''}`}>
+    <div
+      className={`scroll-buttons${visible ? ' visible' : ''}`}
+      style={{ bottom: `${footerOffset}px` }}
+    >
       <span className="price">$315/night</span>
       <div className="actions">
         <Link href={`/properties/${slug}/book`} className="btn">
