@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 import LoginForm, { INITIAL_STATE, type LoginState } from './LoginForm';
 import {
   createOwnerSessionCookie,
@@ -38,9 +40,21 @@ export default async function AdminLoginPage() {
   return (
     <div className="admin-login">
       <div className="admin-login__card">
+        <div className="admin-login__logo">
+          <Image
+            src="/images/logo_transparent.png"
+            alt="Stroman Properties"
+            width={200}
+            height={52}
+            priority
+          />
+        </div>
         <h1>Owner Dashboard</h1>
         <p className="admin-login__subtitle">Enter the access code to view booking holds.</p>
         <LoginForm action={authenticate} />
+        <Link className="admin-login__back" href="/">
+          ← Back to site
+        </Link>
       </div>
     </div>
   );
