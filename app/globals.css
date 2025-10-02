@@ -1430,6 +1430,25 @@ button:hover,
   font-size: 1.05rem;
 }
 
+.modal button[disabled]:not(.close-btn) {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.modal .success-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #1a7f37;
+  text-align: center;
+}
+
+.modal .error-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #c62828;
+  text-align: center;
+}
+
 .modal input,
 .modal textarea {
   width: 100%;
